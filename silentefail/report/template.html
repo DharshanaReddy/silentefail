@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SilentFail Audit Report</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --high: #f85149;
+    --medium: #d29922;
+    --low: #3fb950;
+    --accent: #58a6ff;
+    --code-bg: #1f2937;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.6; padding: 2rem; }
+  h1 { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; }
+  .stat-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .35rem; }
+  .stat-card .value { font-size: 2rem; font-weight: 700; }
+  .stat-card.ok .value { color: var(--low); }
+  .stat-card.warn .value { color: var(--medium); }
+  .stat-card.danger .value { color: var(--high); }
+  .severity-bar { display: flex; gap: .5rem; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; padding: .2rem .65rem; border-radius: 12px; font-size: .75rem; font-weight: 600; letter-spacing: .03em; }
+  .badge.HIGH   { background: rgba(248,81,73,.15); color: var(--high); border: 1px solid rgba(248,81,73,.4); }
+  .badge.MEDIUM { background: rgba(210,153,34,.15); color: var(--medium); border: 1px solid rgba(210,153,34,.4); }
+  .badge.LOW    { background: rgba(63,185,80,.15); color: var(--low); border: 1px solid rgba(63,185,80,.4); }
+  section.failure-class { margin-bottom: 3rem; }
+  section.failure-class h2 { font-size: 1.1rem; font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: .6rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: .6rem; }
+  section.failure-class h2 .count { background: var(--border); color: var(--muted); border-radius: 10px; padding: .1rem .55rem; font-size: .75rem; }
+  .no-failures { color: var(--low); font-size: .9rem; padding: .75rem 0; }
+  .failure-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1rem; overflow: hidden; }
+  .failure-card-header { display: flex; align-items: center; gap: .75rem; padding: .75rem 1.2rem; border-bottom: 1px solid var(--border); }
+  .failure-type { font-weight: 600; font-size: .85rem; color: var(--text); }
+  .failure-card-body { padding: 1rem 1.2rem; display: grid; gap: .85rem; }
+  .field-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: .25rem; }
+  pre { background: var(--code-bg); border-radius: 6px; padding: .75rem 1rem; font-size: .8rem; font-family: "SFMono-Regular", Consolas, monospace; color: #cdd9e5; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto; }
+  .description { font-size: .88rem; color: var(--text); }
+  .recommendation { font-size: .85rem; color: #79c0ff; background: rgba(88,166,255,.07); border-left: 3px solid var(--accent); padding: .6rem .9rem; border-radius: 0 6px 6px 0; }
+  footer { margin-top: 3rem; border-top: 1px solid var(--border); padding-top: 1rem; color: var(--muted); font-size: .8rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<h1>SilentFail Audit Report</h1>
+<p class="subtitle">Generated {{ generated_at }} &nbsp;|&nbsp; Pipeline integrity analysis</p>
+
+<div class="summary-grid">
+  <div class="stat-card">
+    <div class="label">Tests Run</div>
+    <div class="value">{{ total_tests }}</div>
+  </div>
+  <div class="stat-card {{ 'danger' if total_failures > 0 else 'ok' }}">
+    <div class="label">Failures</div>
+    <div class="value">{{ total_failures }}</div>
+  </div>
+  <div class="stat-card {{ 'ok' if pass_rate == 100 else ('warn' if pass_rate >= 75 else 'danger') }}">
+    <div class="label">Pass Rate</div>
+    <div class="value">{{ pass_rate }}%</div>
+  </div>
+  <div class="stat-card danger">
+    <div class="label">High Severity</div>
+    <div class="value">{{ severity_breakdown.get('HIGH', 0) }}</div>
+  </div>
+</div>
+
+<div class="severity-bar">
+  {% for sev, count in severity_breakdown.items() %}
+  <span class="badge {{ sev }}">{{ sev }}: {{ count }}</span>
+  {% endfor %}
+</div>
+
+{% for cls_name, failures in failures_by_class.items() %}
+<section class="failure-class">
+  <h2>{{ cls_name.replace('_', ' ').title() }} <span class="count">{{ failures | length }}</span></h2>
+  {% if failures %}
+    {% for f in failures %}
+    <div class="failure-card">
+      <div class="failure-card-header">
+        <span class="badge {{ f.severity }}">{{ f.severity }}</span>
+        <span class="failure-type">{{ f.failure_type }}</span>
+      </div>
+      <div class="failure-card-body">
+        <div>
+          <div class="field-label">Description</div>
+          <div class="description">{{ f.description }}</div>
+        </div>
+        <div>
+          <div class="field-label">Input</div>
+          <pre>{{ f.input | tojson(indent=2) if f.input is mapping else f.input }}</pre>
+        </div>
+        <div>
+          <div class="field-label">Output</div>
+          <pre>{{ f.output | tojson(indent=2) if f.output is mapping else f.output }}</pre>
+        </div>
+        {% if f.error %}
+        <div>
+          <div class="field-label">Error</div>
+          <pre>{{ f.error }}</pre>
+        </div>
+        {% endif %}
+        <div class="recommendation">&#128161; {{ f.recommendation }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="no-failures">&#10003; No failures detected in this class.</div>
+  {% endif %}
+</section>
+{% endfor %}
+
+<footer>
+  Generated by <a href="https://github.com/dharshareddy02/silentefail">SilentFail</a> &mdash;
+  LLM pipeline integrity testing.
+</footer>
+</body>
+</html>
