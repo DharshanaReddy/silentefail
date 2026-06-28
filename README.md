@@ -171,6 +171,8 @@ Eval frameworks tell you if your model is smart. SilentFail tells you if your pi
 
 > View a [sample report](assets/sample_report.html) generated against the built-in example pipeline.
 
+![SilentFail HTML Report](assets/report_screenshot.png)
+
 ---
 
 ## API Reference
@@ -222,4 +224,4 @@ pip install "silentefail[dev]"
 
 ## Portfolio
 
-Built by [Dharsha Reddy](https://github.com/DharshanaReddy).
+Built by [Dharshana Reddy](https://github.com/DharshanaReddy).
