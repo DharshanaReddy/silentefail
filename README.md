@@ -1,5 +1,10 @@
 # SilentFail
 
+[![PyPI](https://img.shields.io/pypi/v/silentefail)](https://pypi.org/project/silentefail/)
+[![Python](https://img.shields.io/pypi/pyversions/silentefail)](https://pypi.org/project/silentefail/)
+[![CI](https://github.com/DharshanaReddy/silentefail/actions/workflows/ci.yml/badge.svg)](https://github.com/DharshanaReddy/silentefail/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **LLM pipeline integrity testing — catch the failures your tests never will.**
 
 ```bash
@@ -202,6 +207,17 @@ pip install "silentefail[dev]"
 
 ---
 
+## Roadmap — v0.2.0
+
+- [ ] **Async support** — run all four detectors in parallel for faster audits
+- [ ] **OpenAI / Anthropic native runners** — first-class support without LangChain
+- [ ] **CI integration** — `silentefail run` CLI command for pre-merge pipeline checks
+- [ ] **Streaming truncation detection** — detect mid-token cutoffs in streaming responses
+- [ ] **Golden dataset hub** — community-contributed golden datasets by domain (legal, medical, finance)
+- [ ] **Pytest plugin** — `@silentefail.audit` decorator for inline pipeline tests
+
+---
+
 ## Portfolio
 
-Built by [Dharsha Reddy](https://github.com/dharshareddy02).
+Built by [Dharsha Reddy](https://github.com/DharshanaReddy).
