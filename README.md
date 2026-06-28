@@ -169,6 +169,8 @@ Eval frameworks tell you if your model is smart. SilentFail tells you if your pi
 
 `report.export("report.html")` generates a self-contained dark-themed HTML file — no external dependencies, no CDN calls. Each failure shows the input, the output, the failure type, a severity badge, and a one-line fix recommendation. Share it with your team or drop it in a PR.
 
+> View a [sample report](assets/sample_report.html) generated against the built-in example pipeline.
+
 ---
 
 ## API Reference
